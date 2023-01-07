@@ -18,9 +18,13 @@ static struct device *my_device;
 static struct cdev *my_cdev;
 
 int fifo[16];
-int pos = 0;
+int head = 0;
+int tail=0;
+int br_elemenata=0;
+int broj;
 int endRead = 0;
 int temp=0;
+int n=1;
 
 int fifo_open(struct inode *pinode, struct file *pfile);
 int fifo_close(struct inode *pinode, struct file *pfile);
@@ -60,7 +64,8 @@ struct file_operations my_fops =
 
 int fifo_open(struct inode *pinode, struct file *pfile) 
 {
-		printk(KERN_INFO "Succesfully opened fifo\n");
+		
+		printk(KERN_INFO "Succesfully opened fifo\n\n");
 		return 0;
 }
 
@@ -75,31 +80,43 @@ ssize_t fifo_read(struct file *pfile, char __user *buffer, size_t length, loff_t
 	int ret;
 	char buff[BUFF_SIZE];
 	long int len = 0;
+	int i;
+	
+for (i=0; i < n; i++) 
+{
 	if (endRead){
-		endRead = 0;
-		temp++;
-		return 0;
-	}
+			endRead = 0;
+			tail++;
+			return 0;
+		}
 
-	if(pos > 0)
-	{
-				
-		pos--;		
-		len = scnprintf(buff, BUFF_SIZE, "%d ", fifo[temp]); //vraca broj karatkera upisanih u buff
-		ret = copy_to_user(buffer, buff, len); // vraca broj bajtova koji nije upisan
-		if(ret)
-			return -EFAULT;
-		printk(KERN_INFO "Succesfully read\n");
+		if(br_elemenata > 0)
+		{
+			if (tail==16)
+		      tail=0;
+			
+			len = scnprintf(buff, BUFF_SIZE, "%d ", fifo[tail]);    //vraca broj karatkera upisanih u buff
+			ret = copy_to_user(buffer, buff, len);                 // vraca broj bajtova koji nije upisan
+			
+			if(ret)
+				return -EFAULT;
+
+			br_elemenata=br_elemenata-1;
+			printk(KERN_INFO "Uspjesno procitan broj %d na poziciji %d", fifo[tail], tail);
+		  printk(KERN_INFO "Broj elemenata je %d\n\n",br_elemenata); 
+			
+			endRead = 1;
 		
-		endRead = 1;
-	}
-	else
-	{
-		printk(KERN_WARNING "fifo is empty\n");
-		temp=0; 
-	}
+		}
+		else
+		{
+			printk(KERN_WARNING "FIFO je PRAZAN\n");
+			head=0; 
+			tail=0;
+		}
+}
+		return len;
 
-	return len;
 }
 
 
@@ -112,14 +129,12 @@ ssize_t fifo_write(struct file *pfile, const char __user *buffer, size_t length,
 	int i,l,k,j;
 	int trenutni_str=0;
 	int binarni;
-	int broj;
 	int error=0;
 	char *p1=buff;
 	char *p2=buff;
 	int mode=0;
 
 
-	temp=0;
 	ret = copy_from_user(buff, buffer, length); 	// vraca broj bajtova koji nije upisan
 	if(ret)
 		return -EFAULT;
@@ -127,80 +142,104 @@ ssize_t fifo_write(struct file *pfile, const char __user *buffer, size_t length,
     printk(KERN_INFO "buff je : %s\n",buff);
 	printk("\n");	
 	l=strlen(buff);
-    
-
-for (i=0; i<=l; i++) 
-{
-    if (*p2==';') 
-    {		
-        buff[i]='\0';
-        trenutni_str++;
-        memcpy(value, p1, strlen(p1) + 1);
-        ret=sscanf(value,"0b%s",value);       
-        k=strlen(value);
-        mode=1;
-        for (j=0; j < k; j++) 
-        {
-            if(value[j]>49 || value[j]<48) 
-                error=1;
-        } 
-                if(ret==1 && k<= 8 && error==0)				
-                {
-                    kstrtoint(value,10,&binarni); 
-                    broj=bintodec(binarni);
-                        if (pos < 16)
-                        {		
-                             fifo[pos] = broj;
-                             printk(KERN_INFO "Uspjesno upisan broj %d na poiciju %d", broj, pos);  
-                             pos=pos+1;
-                             p1=p2+1;
-                         }
-                        else 
-                            printk(KERN_WARNING "FIFO je PUN\n");
-                }	
-                else 
-                {		
-                    printk(KERN_WARNING "POGRESAN FORMAT %d-og stringa\n",trenutni_str);			
-                    error=0;	
-					p1=p2+1;		
-                }
-                                        
-    }	
    
-    if (*p2=='\0' && mode==0) 
-    {        
-        memcpy(value, p1, strlen(p1) + 1);
-        ret=sscanf(value,"0b%s",value);        
-        k=strlen(value);
-				trenutni_str++;
-        for (j=0; j < k; j++) 
-        {
-            if(value[j]>49 || value[j]<48) 
-                error=1;
-        } 
-                if(ret==1 && k<= 8 && error==0)				
-                {
-                    kstrtoint(value,10,&binarni); 
-                    broj=bintodec(binarni);		
-                        if (pos < 16)
-                        {		
-                            fifo[pos] = broj;
-                            printk(KERN_INFO "Uspjesno upisan broj %d na poiciju %d", broj, pos);  
-                            pos=pos+1;
-                            //p1=p2+1;
-                            }
-                        else 
-                                printk(KERN_WARNING "FIFO je PUN\n");
-                }	
-                else 
-                {		
-                    printk(KERN_WARNING "POGRESAN FORMAT %d-og stringa\n",trenutni_str);			
-                    error=0;			
-                }						
-            }
- 			    p2++;       
- }
+	
+    if(buff[0] == 'n' && buff[1] == 'u' && buff[2] == 'm' && buff[3] == '=')
+	{
 
+		sscanf(buff, "num=%d", &n);
+   		if (n < 1 || n > 16) 
+				printk(KERN_WARNING "POGRESAN FORMAT\n");
+			else 
+				printk(KERN_INFO "Uspjesno postavljeno citanje %d broja odjednom", n);
+		
+				
+	}
+    
+    else 
+    {
+        for (i=0; i<=l; i++) 
+        {
+            if (*p2==';' || (*p2=='\0' && mode==0)) 
+            {		
+                buff[i]='\0';
+                trenutni_str++;
+                memcpy(value, p1, strlen(p1) + 1);
+                ret=sscanf(value,"0b%s",value);       
+                k=strlen(value);
+                mode=1;
+                for (j=0; j < k; j++) 
+                {
+                    if(value[j]>49 || value[j]<48) 
+                        error=1;
+                } 
+                        if(ret==1 && k<= 8 && error==0)				
+                        {
+                            kstrtoint(value,10,&binarni); 
+                            broj=bintodec(binarni);
+                                if (br_elemenata < 16)
+                                {		
+                                if(head==16)
+                                        head=0;
+
+                                    fifo[head] = broj;
+                                    br_elemenata=br_elemenata+1;
+                                    printk(KERN_INFO "Uspjesno upisan broj %d na poziciju %d\n", broj, head);
+                                    printk(KERN_INFO "Broj elemenata je %d\n\n",br_elemenata);  
+                                    head=head+1;
+                                    p1=p2+1;
+                                }
+                                else 
+                                    printk(KERN_WARNING "FIFO je PUN\n");
+                        }	
+                        else 
+                        {		
+                            printk(KERN_WARNING "POGRESAN FORMAT %d-og stringa\n\n",trenutni_str);			
+                            error=0;	
+                                                p1=p2+1;		
+                        }
+                                                
+            }	
+        
+           /* if (*p2=='\0' && mode==0) 
+            {        
+                memcpy(value, p1, strlen(p1) + 1);
+                ret=sscanf(value,"0b%s",value);        
+                k=strlen(value);
+                        trenutni_str++;
+                for (j=0; j < k; j++) 
+                {
+                    if(value[j]>49 || value[j]<48) 
+                        error=1;
+                } 
+                        if(ret==1 && k<= 8 && error==0)				
+                        {
+                            kstrtoint(value,10,&binarni); 
+                            broj=bintodec(binarni);		
+                                if (br_elemenata < 16)
+                                {		
+                                if(head==16)
+                                        head=0;
+
+                                    fifo[head] = broj;
+                                    br_elemenata=br_elemenata+1;
+                                    printk(KERN_INFO "Uspjesno upisan broj %d na poiciju %d", broj, head);
+                                    printk(KERN_INFO "Broj elemenata je %d\n\n",br_elemenata);  
+                                    head=head+1;
+                                    p1=p2+1;
+                                }
+                                else 
+                                    printk(KERN_WARNING "FIFO je PUN\n");
+                        }	
+                        else 
+                        {		
+                            printk(KERN_WARNING "POGRESAN FORMAT %d-og stringa\n",trenutni_str);			
+                            error=0;			
+                        }						
+                    }*/
+                                        p2++;       
+        }
+    }
 return length;
 }
 
@@ -221,7 +260,7 @@ static int __init fifo_init(void)
    }
    printk(KERN_INFO "char device region allocated\n");
 
-   my_class = class_create(THIS_MODULE, "fifo_class");
+   my_class = class_create(THIS_MODULE, "fifo_class");	
    if (my_class == NULL){
       printk(KERN_ERR "failed to create class\n");
       goto fail_0;
