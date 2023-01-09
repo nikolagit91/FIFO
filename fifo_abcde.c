@@ -116,7 +116,6 @@ ssize_t fifo_read(struct file * pfile, char __user * buffer, size_t length, loff
 
     } else {
       printk(KERN_WARNING "FIFO je PRAZAN\n");
-
     }
   }
   up( & sem);
