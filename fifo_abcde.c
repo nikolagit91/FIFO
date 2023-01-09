@@ -123,7 +123,7 @@ for (i=0; i < n; i++)
 
 			br_elemenata=br_elemenata-1;
 			printk(KERN_INFO "Uspjesno procitan broj %d na poziciji %d", fifo[tail], tail);
-		  	printk(KERN_INFO "Broj elemenata je %d\n\n",br_elemenata);	 
+		  printk(KERN_INFO "Broj elemenata je %d\n\n",br_elemenata);	 
 			
 			len=0;
 			endRead = 1;
@@ -159,14 +159,14 @@ ssize_t fifo_write(struct file *pfile, const char __user *buffer, size_t length,
 	ret = copy_from_user(buff, buffer, length); 	
 	if(ret)
 		return -EFAULT;
-    buff[length-1] = '\0';
-    printk(KERN_INFO "buff je : %s\n",buff);
+  buff[length-1] = '\0';
+  printk(KERN_INFO "buff je : %s\n",buff);
 	printk("\n");	
 	l=strlen(buff);
    
 	
 
-    if(buff[0] == 'n' && buff[1] == 'u' && buff[2] == 'm' && buff[3] == '=')
+  if(buff[0] == 'n' && buff[1] == 'u' && buff[2] == 'm' && buff[3] == '=')
 	{
 		sscanf(buff, "num=%d", &n);
 		if (n < 1 || n > 16) 
@@ -176,7 +176,7 @@ ssize_t fifo_write(struct file *pfile, const char __user *buffer, size_t length,
 }
 
 
-	  else 
+	else 
   {
       for (i=0; i<=l; i++) 
       {
@@ -193,21 +193,21 @@ ssize_t fifo_write(struct file *pfile, const char __user *buffer, size_t length,
                   if(value[j]>49 || value[j]<48) 
                       error=1;
               } 
-                      if(ret==1 && k<= 8 && error==0)				
-                      {
-                          kstrtoint(value,10,&binarni); 
-                          broj=bintodec(binarni);
+										if(ret==1 && k<= 8 && error==0)				
+										{
+											kstrtoint(value,10,&binarni); 
+											broj=bintodec(binarni);
 
-							if(down_interruptible(&sem))
-								return -ERESTARTSYS;
-							while(br_elemenata == 16)
-							{
-								up(&sem);
-								if(wait_event_interruptible(writeQ,(br_elemenata<16)))
-									return -ERESTARTSYS;
-								if(down_interruptible(&sem))
-									return -ERESTARTSYS;
-							}
+											if(down_interruptible(&sem))
+												return -ERESTARTSYS;
+											while(br_elemenata == 16)
+											{
+												up(&sem);
+												if(wait_event_interruptible(writeQ,(br_elemenata<16)))
+													return -ERESTARTSYS;
+												if(down_interruptible(&sem))
+													return -ERESTARTSYS;
+											}
 									
                             if (br_elemenata < 16)
                             {		
