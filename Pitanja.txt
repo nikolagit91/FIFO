@@ -1,12 +1,10 @@
-1. assignment makes pointer from integer without a cast  					  ==> kada sam uradio obrada=obrada_str(value); nisam siguran jer obrada bila
-                                                                        globalna promenjiva tada
+1. assignment makes pointer from integer without a cast  ==> kada sam uradio obrada=obrada_str(value); nisam siguran jer obrada bila globalna promenjiva tada
 
 
-2. return makes pointer from integer without a cast 								==> kada sam u obradi_str dodao return 1 i return 0 u if i else
+2. return makes pointer from integer without a cast ==> kada sam u obradi_str dodao return 1 i return 0 u if i else
 
 
-3. sscanf(buff, "num=%1[1-9]%1[0-5]%d", &n);												==> kako ucitati n preko ovoga ? vraca mi npr format ‘%[0-5’ expects a 
-                                                                        matching ‘char *’ argument
+3. sscanf(buff, "num=%1[1-9]%1[0-5]%d", &n);	==> kako ucitati n preko ovoga ? vraca mi npr format ‘%[0-5’ expects a matching ‘char *’ argument
 
 
 4. zasto obican write odmah baca vrijednost u nizu pa tek onda ide sve ostalo
