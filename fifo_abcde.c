@@ -49,7 +49,6 @@ int bintodec(int m) {
     dec += last_digit * base;
     base = base * 2;
   }
-
   return dec;
 }
 
@@ -157,6 +156,7 @@ ssize_t fifo_write(struct file * pfile, const char __user * buffer, size_t lengt
 
   } else {
     for (i = 0; i <= l; i++) {
+        
       if ( * p2 == ';' || ( * p2 == '\0' && mode == 0)) {
         buff[i] = '\0';
         trenutni_str++;
