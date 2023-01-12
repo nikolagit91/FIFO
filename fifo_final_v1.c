@@ -49,6 +49,7 @@ int bintodec(int m) {
     dec += last_digit * base;
     base = base * 2;
   }
+
   return dec;
 }
 
@@ -84,16 +85,16 @@ ssize_t fifo_read(struct file * pfile, char __user * buffer, size_t length, loff
       //return 0;
     }
 
-    if (down_interruptible( & sem))
+    if (down_interruptible(&sem))
       return -ERESTARTSYS;
 
     while (br_elemenata == 0) {
-      up( & sem);
       head = 0;
       tail = 0;
-      if (wait_event_interruptible(readQ, (br_elemenata > 0)))
+			up(&sem);      
+			if (wait_event_interruptible(readQ, (br_elemenata > 0)))
         return -ERESTARTSYS;
-      if (down_interruptible( & sem))
+      if (down_interruptible(&sem))
         return -ERESTARTSYS;
     }
 
@@ -116,10 +117,11 @@ ssize_t fifo_read(struct file * pfile, char __user * buffer, size_t length, loff
 
     } else {
       printk(KERN_WARNING "FIFO je PRAZAN\n");
+
     }
   }
-  up( & sem);
-  wake_up_interruptible( & writeQ);
+  up(&sem);
+  wake_up_interruptible(&writeQ);
   return len;
 
 }
@@ -155,7 +157,6 @@ ssize_t fifo_write(struct file * pfile, const char __user * buffer, size_t lengt
 
   } else {
     for (i = 0; i <= l; i++) {
-        
       if ( * p2 == ';' || ( * p2 == '\0' && mode == 0)) {
         buff[i] = '\0';
         trenutni_str++;
@@ -171,13 +172,13 @@ ssize_t fifo_write(struct file * pfile, const char __user * buffer, size_t lengt
           kstrtoint(value, 10, & binarni);
           broj = bintodec(binarni);
 
-          if (down_interruptible( & sem))
+          if (down_interruptible(&sem))
             return -ERESTARTSYS;
           while (br_elemenata == 16) {
-            up( & sem);
+            up(&sem);
             if (wait_event_interruptible(writeQ, (br_elemenata < 16)))
               return -ERESTARTSYS;
-            if (down_interruptible( & sem))
+            if (down_interruptible(&sem))
               return -ERESTARTSYS;
           }
 
@@ -200,8 +201,8 @@ ssize_t fifo_write(struct file * pfile, const char __user * buffer, size_t lengt
         }
       }
       p2++;
-      up( & sem);
-      wake_up_interruptible( & readQ);
+      up(&sem);
+      wake_up_interruptible(&readQ);
     }
   }
 
